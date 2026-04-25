@@ -1,4 +1,5 @@
 {
+  "version": "1.1",
   "feature_cols": [
     "body_ratio",
     "upper_wick_ratio",
@@ -10,32 +11,211 @@
     "prev_bullish",
     "prev_body_ratio",
     "prev_body",
-    "prev_candle_range"
+    "prev_candle_range",
+    "close_to_ma20",
+    "close_to_ma50",
+    "close_to_ma200",
+    "above_ma20",
+    "above_ma50",
+    "above_ma200",
+    "ma20_slope",
+    "ma50_slope",
+    "prev2_bullish",
+    "prev2_body_ratio",
+    "prev2_body",
+    "prev2_candle_range"
   ],
   "pattern_names": {
     "0": "None",
-    "1": "Hammer",
-    "2": "Doji",
-    "3": "Bullish Engulfing",
-    "4": "Bearish Engulfing",
-    "5": "Shooting Star"
+    "1": "Doji family",
+    "2": "Bullish single-candle",
+    "3": "Bearish single-candle",
+    "4": "Bullish multi-candle",
+    "5": "Bearish multi-candle"
   },
-  "train_period": {
-    "start": "2020-01-01",
-    "end": "2024-01-01"
-  },
-  "test_period": {
-    "start": "2024-01-01",
-    "end": "2025-01-01"
-  },
-  "tickers": [
-    "AAPL",
-    "MSFT",
-    "SPY",
-    "TSLA",
-    "GOOGL"
+  "pattern_defs": [
+    {
+      "name": "Doji",
+      "ta_name": "doji",
+      "sign": 0,
+      "class_id": 1,
+      "candle_count": 1,
+      "family": "Indecision"
+    },
+    {
+      "name": "Dragonfly Doji",
+      "ta_name": "dragonflydoji",
+      "sign": 0,
+      "class_id": 1,
+      "candle_count": 1,
+      "family": "Indecision"
+    },
+    {
+      "name": "Gravestone Doji",
+      "ta_name": "gravestonedoji",
+      "sign": 0,
+      "class_id": 1,
+      "candle_count": 1,
+      "family": "Indecision"
+    },
+    {
+      "name": "Hammer",
+      "ta_name": "hammer",
+      "sign": 100,
+      "class_id": 2,
+      "candle_count": 1,
+      "family": "Bullish"
+    },
+    {
+      "name": "Inverted Hammer",
+      "ta_name": "invertedhammer",
+      "sign": 100,
+      "class_id": 2,
+      "candle_count": 1,
+      "family": "Bullish"
+    },
+    {
+      "name": "Bullish Marubozu",
+      "ta_name": "marubozu",
+      "sign": 100,
+      "class_id": 2,
+      "candle_count": 1,
+      "family": "Bullish"
+    },
+    {
+      "name": "Hanging Man",
+      "ta_name": "hangingman",
+      "sign": -100,
+      "class_id": 3,
+      "candle_count": 1,
+      "family": "Bearish"
+    },
+    {
+      "name": "Shooting Star",
+      "ta_name": "shootingstar",
+      "sign": -100,
+      "class_id": 3,
+      "candle_count": 1,
+      "family": "Bearish"
+    },
+    {
+      "name": "Bearish Marubozu",
+      "ta_name": "marubozu",
+      "sign": -100,
+      "class_id": 3,
+      "candle_count": 1,
+      "family": "Bearish"
+    },
+    {
+      "name": "Bullish Engulfing",
+      "ta_name": "engulfing",
+      "sign": 100,
+      "class_id": 4,
+      "candle_count": 2,
+      "family": "Bullish"
+    },
+    {
+      "name": "Bullish Harami",
+      "ta_name": "harami",
+      "sign": 100,
+      "class_id": 4,
+      "candle_count": 2,
+      "family": "Bullish"
+    },
+    {
+      "name": "Piercing Line",
+      "ta_name": "piercing",
+      "sign": 100,
+      "class_id": 4,
+      "candle_count": 2,
+      "family": "Bullish"
+    },
+    {
+      "name": "Bearish Engulfing",
+      "ta_name": "engulfing",
+      "sign": -100,
+      "class_id": 5,
+      "candle_count": 2,
+      "family": "Bearish"
+    },
+    {
+      "name": "Bearish Harami",
+      "ta_name": "harami",
+      "sign": -100,
+      "class_id": 5,
+      "candle_count": 2,
+      "family": "Bearish"
+    },
+    {
+      "name": "Dark Cloud Cover",
+      "ta_name": "darkcloudcover",
+      "sign": -100,
+      "class_id": 5,
+      "candle_count": 2,
+      "family": "Bearish"
+    },
+    {
+      "name": "Morning Star",
+      "ta_name": "morningstar",
+      "sign": 100,
+      "class_id": 4,
+      "candle_count": 3,
+      "family": "Bullish"
+    },
+    {
+      "name": "Three White Soldiers",
+      "ta_name": "3whitesoldiers",
+      "sign": 100,
+      "class_id": 4,
+      "candle_count": 3,
+      "family": "Bullish"
+    },
+    {
+      "name": "Evening Star",
+      "ta_name": "eveningstar",
+      "sign": -100,
+      "class_id": 5,
+      "candle_count": 3,
+      "family": "Bearish"
+    },
+    {
+      "name": "Three Black Crows",
+      "ta_name": "3blackcrows",
+      "sign": -100,
+      "class_id": 5,
+      "candle_count": 3,
+      "family": "Bearish"
+    }
   ],
-  "model_type": "RandomForestClassifier",
-  "n_estimators": 200,
-  "accuracy": 0.93
+  "training": {
+    "tickers": [
+      "AAPL",
+      "MSFT",
+      "SPY",
+      "TSLA",
+      "GOOGL"
+    ],
+    "fetch_start": "2019-03-01",
+    "train_start": "2020-01-01",
+    "split_date": "2024-01-01",
+    "end_date": "2025-01-01",
+    "n_train": 5030,
+    "n_test": 1260,
+    "model_type": "v1.1 HGB + sample weights",
+    "rf_params": {
+      "n_estimators": 200,
+      "max_depth": 10,
+      "class_weight": {
+        "0": 1.0,
+        "1": 2.0,
+        "2": 2.5,
+        "3": 3.0,
+        "4": 3.5,
+        "5": 3.5
+      },
+      "random_state": 42
+    },
+    "test_accuracy": 0.7833333333333333,
+    "test_macro_f1": 0.6460437991145174
+  }
 }

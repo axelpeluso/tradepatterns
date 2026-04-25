@@ -26,5 +26,8 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Local-only working files (training driver, cached data, staged artifacts)
+/_*
+
 # Note: model.pkl and model_meta.json are intentionally tracked
-# (needed for deployment of the trained Random Forest model)
+# (needed for deployment of the trained model)

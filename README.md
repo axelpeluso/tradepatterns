@@ -64,9 +64,10 @@ OpenAPI/Swagger docs are auto-generated at `/docs`.
 
 ## Version History
 
-| Version | Description                                                | Accuracy |
-|---------|------------------------------------------------------------|----------|
-| v1.0    | Baseline Random Forest, 5 patterns, FastAPI + Plotly UI    | 93%      |
+| Version | Description                                                | Accuracy           |
+|---------|------------------------------------------------------------|--------------------|
+| v1.0    | Baseline Random Forest, 5 patterns, FastAPI + Plotly UI    | 93%                |
+| v1.1    | 19 patterns, HGB model, MA features                        | 78% acc, 0.65 F1   |
 
 ## Tech Stack
 
