@@ -1,0 +1,41 @@
+{
+  "feature_cols": [
+    "body_ratio",
+    "upper_wick_ratio",
+    "lower_wick_ratio",
+    "bullish",
+    "body_position",
+    "pct_change_1",
+    "pct_change_3",
+    "prev_bullish",
+    "prev_body_ratio",
+    "prev_body",
+    "prev_candle_range"
+  ],
+  "pattern_names": {
+    "0": "None",
+    "1": "Hammer",
+    "2": "Doji",
+    "3": "Bullish Engulfing",
+    "4": "Bearish Engulfing",
+    "5": "Shooting Star"
+  },
+  "train_period": {
+    "start": "2020-01-01",
+    "end": "2024-01-01"
+  },
+  "test_period": {
+    "start": "2024-01-01",
+    "end": "2025-01-01"
+  },
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "SPY",
+    "TSLA",
+    "GOOGL"
+  ],
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 200,
+  "accuracy": 0.93
+}

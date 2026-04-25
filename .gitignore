@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets / env
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build / coverage artifacts
+*.egg-info/
+.coverage
+htmlcov/
+
+# Note: model.pkl and model_meta.json are intentionally tracked
+# (needed for deployment of the trained Random Forest model)
