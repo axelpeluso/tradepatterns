@@ -577,20 +577,20 @@
       <div class="stat-label">Patterns</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" id="statHammer" style="color:var(--yellow)">—</div>
-      <div class="stat-label">Hammer</div>
+      <div class="stat-value" id="statHammer" style="color:var(--green)">—</div>
+      <div class="stat-label">Bull Single</div>
     </div>
     <div class="stat-card">
       <div class="stat-value" id="statDoji" style="color:var(--muted)">—</div>
       <div class="stat-label">Doji</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" id="statBullEng" style="color:var(--green)">—</div>
-      <div class="stat-label">Bull Engulf</div>
+      <div class="stat-value" id="statBullEng" style="color:var(--accent)">—</div>
+      <div class="stat-label">Bull Multi</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value" id="statBearEng" style="color:var(--red)">—</div>
-      <div class="stat-label">Bear Engulf</div>
+      <div class="stat-value" id="statBearEng" style="color:#ff6b35">—</div>
+      <div class="stat-label">Bear Multi</div>
     </div>
   </div>
 
@@ -607,11 +607,11 @@
 
   <!-- Legend -->
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Hammer</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#a0aec0"></div>Doji</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#00ff87"></div>Bullish Engulfing</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff4560"></div>Bearish Engulfing</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>Shooting Star</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a0aec0"></div>Doji family</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff87"></div>Bullish single-candle</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff4560"></div>Bearish single-candle</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00d4ff"></div>Bullish multi-candle</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>Bearish multi-candle</div>
   </div>
 
   <!-- Pattern table -->
@@ -760,13 +760,21 @@
 </div>
 
 <script>
-  // Pattern colours and signal direction
+  // Pattern colours, signal direction, and trading action.
+  // Keys match the v1.1 /detect API class-level pattern_name values.
   const PATTERN_CONFIG = {
-    "Hammer":            { color: "#ffd700", signal: "Bullish Reversal",  signalColor: "#00ff87" },
-    "Doji":              { color: "#a0aec0", signal: "Indecision",        signalColor: "#a0aec0" },
-    "Bullish Engulfing": { color: "#00ff87", signal: "Bullish Reversal",  signalColor: "#00ff87" },
-    "Bearish Engulfing": { color: "#ff4560", signal: "Bearish Reversal",  signalColor: "#ff4560" },
-    "Shooting Star":     { color: "#ff6b35", signal: "Bearish Reversal",  signalColor: "#ff4560" },
+    "Doji family":           { color: "#a0aec0", signal: "Indecision",       action: "HOLD" },
+    "Bullish single-candle": { color: "#00ff87", signal: "Bullish Reversal", action: "BUY"  },
+    "Bearish single-candle": { color: "#ff4560", signal: "Bearish Reversal", action: "SELL" },
+    "Bullish multi-candle":  { color: "#00d4ff", signal: "Bullish Reversal", action: "BUY"  },
+    "Bearish multi-candle":  { color: "#ff6b35", signal: "Bearish Reversal", action: "SELL" },
+  };
+
+  // Map a trading action to a colour for badge / signal-text rendering.
+  const ACTION_COLOR = {
+    BUY:  "var(--green)",
+    SELL: "var(--red)",
+    HOLD: "var(--muted)",
   };
 
   async function runDetection() {
@@ -831,10 +839,10 @@
   function renderStats(data) {
     document.getElementById("statCandles").textContent  = data.total_candles;
     document.getElementById("statPatterns").textContent = data.total_patterns;
-    document.getElementById("statHammer").textContent   = data.summary["Hammer"]            || 0;
-    document.getElementById("statDoji").textContent     = data.summary["Doji"]              || 0;
-    document.getElementById("statBullEng").textContent  = data.summary["Bullish Engulfing"] || 0;
-    document.getElementById("statBearEng").textContent  = data.summary["Bearish Engulfing"] || 0;
+    document.getElementById("statHammer").textContent   = data.summary["Bullish single-candle"] || 0;
+    document.getElementById("statDoji").textContent     = data.summary["Doji family"]           || 0;
+    document.getElementById("statBullEng").textContent  = data.summary["Bullish multi-candle"]  || 0;
+    document.getElementById("statBearEng").textContent  = data.summary["Bearish multi-candle"]  || 0;
   }
 
   function renderChart(data) {
@@ -935,12 +943,13 @@
     }
 
     const rows = [...patterns].reverse().map(p => {
-      const cfg = PATTERN_CONFIG[p.pattern_name] || { color: "#fff", signal: "—", signalColor: "#fff" };
+      const cfg = PATTERN_CONFIG[p.pattern_name] || { color: "#fff", signal: "—", action: "HOLD" };
+      const signalColor = ACTION_COLOR[cfg.action] || "var(--muted)";
       return `
         <tr>
           <td>${p.date}</td>
           <td><span class="badge" style="color:${cfg.color};border-color:${cfg.color}">${p.pattern_name}</span></td>
-          <td><span style="color:${cfg.signalColor};font-size:0.8rem">${cfg.signal}</span></td>
+          <td><span style="color:${signalColor};font-size:0.8rem">${cfg.signal}</span></td>
         </tr>`;
     }).join("");
 
@@ -958,8 +967,9 @@
 
   let lastDetectionData = null;
 
-  const BUY_PATTERNS  = new Set(["Bullish Engulfing", "Hammer"]);
-  const SELL_PATTERNS = new Set(["Bearish Engulfing", "Shooting Star"]);
+  // v1.1 class-level pattern_name values — match PATTERN_CONFIG keys.
+  const BUY_PATTERNS  = new Set(["Bullish single-candle", "Bullish multi-candle"]);
+  const SELL_PATTERNS = new Set(["Bearish single-candle", "Bearish multi-candle"]);
 
   function switchTab(tabId) {
     document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
