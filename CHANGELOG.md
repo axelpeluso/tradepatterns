@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [v2.0] - 2026-04-25
+
+### Approach
+- Attempted to add 9 momentum/volume features to classifier
+- Result: all three targets missed (accuracy -0.012, macro F1 -0.029, multi-candle recall -0.119)
+- Root cause: TA-Lib CDL labels are derived from OHLC geometry only — momentum/volume features are independent of the label → feature dilution, not signal
+- Decision: keep v1.1 model unchanged, surface indicators as inference-time context instead
+
+### What changed
+- `detector.py`: `compute_indicators()` added — Stochastics %K/%D, ADX, volume ratio, squeeze momentum computed at request time on the warmed-up featured DataFrame
+- `/detect` response now includes an `indicators` dict with values + human-readable signal text
+- UI: Market Context panel (4 cards) shows after each detection with color-coded signal status
+- Negative result documented as a valid ML finding (a feature added because it "should help" doesn't help when the supervised target is independent of it)
+
+### Model
+- Unchanged from v1.1 (HGB, 19 patterns, 23 features)
+- v2.0 accuracy: same as v1.1 (0.7833)
+
+### Notes
+- pandas-ta + TA-Lib now required in `.venv` (server) in addition to conda base — installed via `pip install pandas-ta TA-Lib`
+- `pandas-ta.squeeze()` column-name caveat: the binary squeeze-active flag is `SQZ_ON`, not `SQZ_20_2.0_20_1.5` (which is the momentum value)
+
 ## [v1.1] - 2026-04-25
 
 ### Model

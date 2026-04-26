@@ -487,6 +487,64 @@
 
   .kpi-info:hover + .kpi-tooltip { display: block; }
 
+  /* === v2.0 indicator (market context) panel === */
+  .indicator-panel {
+    margin-bottom: 24px;
+  }
+
+  .indicator-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .indicator-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--muted);
+    border-radius: 10px;
+    padding: 18px 16px 14px;
+    transition: transform 0.15s;
+  }
+
+  .indicator-card:hover { transform: translateY(-2px); }
+  .indicator-card[data-tone="green"]  { border-top-color: var(--green); }
+  .indicator-card[data-tone="red"]    { border-top-color: var(--red); }
+  .indicator-card[data-tone="accent"] { border-top-color: var(--accent); }
+  .indicator-card[data-tone="yellow"] { border-top-color: var(--yellow); }
+
+  .indicator-value {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .indicator-card[data-tone="green"]  .indicator-value { color: var(--green); }
+  .indicator-card[data-tone="red"]    .indicator-value { color: var(--red); }
+  .indicator-card[data-tone="accent"] .indicator-value { color: var(--accent); }
+  .indicator-card[data-tone="yellow"] .indicator-value { color: var(--yellow); }
+
+  .indicator-signal {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .indicator-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 900px) {
+    .indicator-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
   /* === Backtest secondary stats === */
   .secondary-stats {
     display: grid;
@@ -594,6 +652,33 @@
     </div>
   </div>
 
+  <!-- v2.0 Market Context — populated after each detection, hidden until then -->
+  <div class="indicator-panel" id="indicatorPanel" style="display:none">
+    <div class="panel-title">// Market Context (v2.0)</div>
+    <div class="indicator-row">
+      <div class="indicator-card" id="cardStoch">
+        <div class="indicator-value"  id="indStochValue">—</div>
+        <div class="indicator-signal" id="indStochSignal">—</div>
+        <div class="indicator-label">Stochastics %K</div>
+      </div>
+      <div class="indicator-card" id="cardAdx">
+        <div class="indicator-value"  id="indAdxValue">—</div>
+        <div class="indicator-signal" id="indAdxSignal">—</div>
+        <div class="indicator-label">ADX Trend Strength</div>
+      </div>
+      <div class="indicator-card" id="cardVolume">
+        <div class="indicator-value"  id="indVolumeValue">—</div>
+        <div class="indicator-signal" id="indVolumeSignal">—</div>
+        <div class="indicator-label">Volume vs 20-day Avg</div>
+      </div>
+      <div class="indicator-card" id="cardSqueeze">
+        <div class="indicator-value"  id="indSqueezeValue">—</div>
+        <div class="indicator-signal" id="indSqueezeSignal">—</div>
+        <div class="indicator-label">Squeeze Momentum</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Chart -->
   <div class="chart-container">
     <div class="panel-title">// Candlestick Chart + Pattern Markers</div>
@@ -612,6 +697,8 @@
     <div class="legend-item"><div class="legend-dot" style="background:#ff4560"></div>Bearish single-candle</div>
     <div class="legend-item"><div class="legend-dot" style="background:#00d4ff"></div>Bullish multi-candle</div>
     <div class="legend-item"><div class="legend-dot" style="background:#ff6b35"></div>Bearish multi-candle</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00ff87"></div>BUY Signal</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ff4560"></div>SELL Signal</div>
   </div>
 
   <!-- Pattern table -->
@@ -817,6 +904,7 @@
       lastDetectionData = data;
       renderChart(data);
       renderStats(data);
+      renderIndicators(data.indicators);
       renderTable(data.patterns);
       runBacktest(data);
 
@@ -834,6 +922,42 @@
     el.style.display = "block";
     document.getElementById("loading").classList.remove("active");
     document.getElementById("detectBtn").disabled = false;
+  }
+
+  // v2.0 — render the Market Context indicator panel.
+  function renderIndicators(ind) {
+    const panel = document.getElementById("indicatorPanel");
+    if (!ind || ind.error) {
+      panel.style.display = "none";
+      return;
+    }
+    panel.style.display = "block";
+
+    // Stochastics
+    document.getElementById("indStochValue").textContent  = Number(ind.stoch_k).toFixed(1);
+    document.getElementById("indStochSignal").textContent = ind.stoch_signal;
+    document.getElementById("cardStoch").dataset.tone =
+      ind.stoch_signal === "Oversold"   ? "green" :
+      ind.stoch_signal === "Overbought" ? "red"   : "";
+
+    // ADX
+    document.getElementById("indAdxValue").textContent  = Number(ind.adx).toFixed(1);
+    document.getElementById("indAdxSignal").textContent = ind.adx_signal;
+    document.getElementById("cardAdx").dataset.tone =
+      ind.adx_signal === "Strong trend" ? "accent" : "";
+
+    // Volume
+    document.getElementById("indVolumeValue").textContent  = Number(ind.volume_ratio).toFixed(2) + "x";
+    document.getElementById("indVolumeSignal").textContent = ind.volume_signal;
+    document.getElementById("cardVolume").dataset.tone =
+      ind.volume_signal === "High volume" ? "green" :
+      ind.volume_signal === "Low volume"  ? "red"   : "";
+
+    // Squeeze
+    document.getElementById("indSqueezeValue").textContent  = ind.squeeze_active ? "ACTIVE" : "INACTIVE";
+    document.getElementById("indSqueezeSignal").textContent = ind.squeeze_signal;
+    document.getElementById("cardSqueeze").dataset.tone =
+      ind.squeeze_active ? "yellow" : "";
   }
 
   function renderStats(data) {
@@ -862,6 +986,11 @@
       name: data.ticker,
       increasing: { line: { color: "#00ff87" }, fillcolor: "#00ff87" },
       decreasing: { line: { color: "#ff4560" }, fillcolor: "#ff4560" },
+      hovertemplate:
+        "<b>%{x}</b><br>" +
+        "O: $%{open:.2f}  H: $%{high:.2f}<br>" +
+        "L: $%{low:.2f}  C: $%{close:.2f}" +
+        "<extra></extra>",
     };
 
     // One scatter trace per pattern type so they appear in the legend
@@ -871,13 +1000,23 @@
       patternGroups[p.pattern_name].push(p);
     });
 
+    // Collect SELL dates first so pattern markers on those dates can be lifted
+    // higher to avoid colliding with the SELL label.
+    const candleByDate = new Map(candles.map(c => [c.date, c]));
+    const buySignals  = patterns.filter(p => BUY_PATTERNS.has(p.pattern_name));
+    const sellSignals = patterns.filter(p => SELL_PATTERNS.has(p.pattern_name));
+    const sellDates   = new Set(sellSignals.map(p => p.date));
+
     const patternTraces = Object.entries(patternGroups).map(([name, pts]) => {
       const cfg    = PATTERN_CONFIG[name] || { color: "#ffffff" };
       const pDates = pts.map(p => p.date);
-      // Find the high for each pattern date to place the marker above it
+      // Pattern marker sits at high*1.012 normally, lifted to high*1.040 when
+      // a SELL marker is on the same date (which renders at high*1.025).
       const pHighs = pts.map(p => {
-        const c = candles.find(c => c.date === p.date);
-        return c ? c.high * 1.012 : null;
+        const c = candleByDate.get(p.date);
+        if (!c) return null;
+        const multiplier = sellDates.has(p.date) ? 1.040 : 1.012;
+        return c.high * multiplier;
       });
 
       return {
@@ -888,14 +1027,69 @@
         name: name,
         marker: {
           symbol: "triangle-down",
-          size: 12,
+          size: 10,
           color: cfg.color,
           line: { color: "#0a0e17", width: 1 }
         },
-        text: pts.map(p => `${name}<br>${p.date}`),
-        hoverinfo: "text",
+        hoverinfo: "skip",
       };
     });
+
+    // BUY/SELL signal traces — vertically separated from pattern markers.
+    const buyTrace = {
+      type: "scatter",
+      mode: "markers+text",
+      x: buySignals.map(p => p.date),
+      y: buySignals.map(p => {
+        const c = candleByDate.get(p.date);
+        return c ? c.low * 0.975 : null;
+      }),
+      name: "BUY Signal",
+      marker: {
+        symbol: "triangle-up",
+        size: 14,
+        color: "#00ff87",
+        line: { color: "#0a0e17", width: 1 }
+      },
+      text: buySignals.map(() => "BUY"),
+      textposition: "bottom center",
+      textfont: { family: "'Share Tech Mono', monospace", size: 9, color: "#00ff87" },
+      // pattern_name routed via customdata so `text` stays as the "BUY" label.
+      customdata: buySignals.map(p => p.pattern_name),
+      hovertemplate:
+        "<b>BUY Signal</b><br>" +
+        "%{customdata}<br>" +
+        "%{x}" +
+        "<extra></extra>",
+      showlegend: true,
+    };
+
+    const sellTrace = {
+      type: "scatter",
+      mode: "markers+text",
+      x: sellSignals.map(p => p.date),
+      y: sellSignals.map(p => {
+        const c = candleByDate.get(p.date);
+        return c ? c.high * 1.025 : null;
+      }),
+      name: "SELL Signal",
+      marker: {
+        symbol: "triangle-down",
+        size: 14,
+        color: "#ff4560",
+        line: { color: "#0a0e17", width: 1 }
+      },
+      text: sellSignals.map(() => "SELL"),
+      textposition: "top center",
+      textfont: { family: "'Share Tech Mono', monospace", size: 8, color: "#ff4560" },
+      customdata: sellSignals.map(p => p.pattern_name),
+      hovertemplate:
+        "<b>SELL Signal</b><br>" +
+        "%{customdata}<br>" +
+        "%{x}" +
+        "<extra></extra>",
+      showlegend: true,
+    };
 
     const layout = {
       paper_bgcolor: "#111827",
@@ -921,10 +1115,10 @@
         font:        { size: 11 },
       },
       margin: { l: 60, r: 20, t: 20, b: 60 },
-      hovermode: "x unified",
+      hovermode: "closest",
     };
 
-    Plotly.newPlot("chart", [candleTrace, ...patternTraces], layout, {
+    Plotly.newPlot("chart", [candleTrace, ...patternTraces, buyTrace, sellTrace], layout, {
       responsive: true,
       displayModeBar: true,
       modeBarButtonsToRemove: ["lasso2d", "select2d"],
@@ -999,76 +1193,113 @@
       return;
     }
 
-    const patternsByDate = {};
+    // ---- Build signalDates with conflict detection (BUG 2 fix) ----
+    // If a date has both BUY-action and SELL-action patterns from different
+    // detections, mark CONFLICT and ignore the date entirely.
+    const getAction = (name) => {
+      if (BUY_PATTERNS.has(name))  return "BUY";
+      if (SELL_PATTERNS.has(name)) return "SELL";
+      return "HOLD";
+    };
+    const signalDates = {};
     patterns.forEach(p => {
-      (patternsByDate[p.date] = patternsByDate[p.date] || []).push(p.pattern_name);
+      const action = getAction(p.pattern_name);
+      if (action === "HOLD") return;
+      if (signalDates[p.date] && signalDates[p.date] !== action) {
+        signalDates[p.date] = "CONFLICT";
+      } else if (!signalDates[p.date]) {
+        signalDates[p.date] = action;
+      }
+    });
+    Object.keys(signalDates).forEach(d => {
+      if (signalDates[d] === "CONFLICT") delete signalDates[d];
     });
 
-    let cash = initial;
-    let shares = 0;
+    // ---- Simulation state ----
+    let cash       = initial;
+    let shares     = 0;
     let entryPrice = 0;
-    let entryShares = 0;
+    let inPosition = false;
 
     const equityCurve    = [];
     const benchmarkCurve = [];
     const tradeLog       = [];
 
+    // Buy & hold benchmark: buy at first open, mark to market thereafter.
     const firstOpen   = candles[0].open;
     const benchShares = initial / firstOpen;
 
-    for (let i = 0; i < candles.length; i++) {
-      const c = candles[i];
+    // ---- Main loop ----
+    // BUG 1: signal on candles[i] executes at candles[i+1].open.
+    // BUG 3: state-aware (BUY only when flat, SELL only when long).
+    // The last candle (i = length-1) has no candles[i+1], so its signal is
+    // skipped per spec; the final day is still appended to equityCurve below.
+    for (let i = 0; i < candles.length - 1; i++) {
+      const today    = candles[i];
+      const nextOpen = candles[i + 1].open;
+      const nextDate = candles[i + 1].date;
+      const signal   = signalDates[today.date];   // "BUY", "SELL", or undefined
 
-      // Signals from yesterday's pattern execute at today's open
-      if (i > 0) {
-        const prev     = patternsByDate[candles[i - 1].date] || [];
-        const wantSell = prev.some(p => SELL_PATTERNS.has(p));
-        const wantBuy  = prev.some(p => BUY_PATTERNS.has(p));
-
-        if (wantSell && shares > 0) {
-          const proceeds = shares * c.open - commission;
-          const cost     = entryShares * entryPrice + commission;
-          const pnl      = proceeds - cost;
-          cash += proceeds;
+      if (signal === "BUY" && !inPosition) {
+        const allocCash = cash * positionPct;
+        const numShares = Math.floor((allocCash - commission) / nextOpen);
+        if (numShares > 0) {
+          const cost = numShares * nextOpen + commission;
+          cash -= cost;
+          shares = numShares;
+          entryPrice = nextOpen;
+          inPosition = true;
+          const portValAfter = cash + shares * nextOpen;
           tradeLog.push({
-            date:      c.date,
-            action:    "SELL",
-            price:     c.open,
-            shares:    shares,
-            value:     shares * c.open,
-            pnl:       pnl,
-            cumReturn: (cash - initial) / initial * 100
+            date:      nextDate,
+            action:    "BUY",
+            price:     nextOpen,
+            shares:    numShares,
+            value:     numShares * nextOpen,
+            pnl:       null,
+            cumReturn: (portValAfter - initial) / initial * 100,
           });
-          shares = 0;
-          entryPrice = 0;
-          entryShares = 0;
-        } else if (wantBuy && shares === 0) {
-          const allocCash = cash * positionPct;
-          const numShares = Math.floor((allocCash - commission) / c.open);
-          if (numShares > 0) {
-            const cost = numShares * c.open + commission;
-            cash -= cost;
-            shares = numShares;
-            entryPrice = c.open;
-            entryShares = numShares;
-            const portValAfter = cash + shares * c.open;
-            tradeLog.push({
-              date:      c.date,
-              action:    "BUY",
-              price:     c.open,
-              shares:    numShares,
-              value:     numShares * c.open,
-              pnl:       null,
-              cumReturn: (portValAfter - initial) / initial * 100
-            });
-          }
         }
+      } else if (signal === "SELL" && inPosition) {
+        const proceeds = shares * nextOpen - commission;
+        const cost     = shares * entryPrice + commission;
+        const pnl      = proceeds - cost;
+        cash += proceeds;
+        tradeLog.push({
+          date:      nextDate,
+          action:    "SELL",
+          price:     nextOpen,
+          shares:    shares,
+          value:     shares * nextOpen,
+          pnl:       pnl,
+          cumReturn: (cash - initial) / initial * 100,
+        });
+        shares = 0;
+        entryPrice = 0;
+        inPosition = false;
       }
 
-      const portValue  = cash + shares * c.close;
-      const benchValue = benchShares * c.close;
-      equityCurve.push({ date: c.date, value: portValue, invested: shares > 0 });
-      benchmarkCurve.push({ date: c.date, value: benchValue });
+      // Daily portfolio value at today's close (mark to market when long).
+      const portValue  = inPosition ? cash + shares * today.close : cash;
+      const benchValue = benchShares * today.close;
+      equityCurve.push({ date: today.date, value: portValue, invested: inPosition });
+      benchmarkCurve.push({ date: today.date, value: benchValue });
+    }
+
+    // ---- Append final day (no trade executes past end of data) ----
+    const lastCandle = candles[candles.length - 1];
+    const finalPortValue = inPosition
+      ? cash + shares * lastCandle.close
+      : cash;
+    equityCurve.push({ date: lastCandle.date, value: finalPortValue, invested: inPosition });
+    benchmarkCurve.push({ date: lastCandle.date, value: benchShares * lastCandle.close });
+
+    // ---- Close any open position at last close (cash settlement, not logged) ----
+    if (inPosition) {
+      const proceeds = shares * lastCandle.close - commission;
+      cash += proceeds;
+      shares = 0;
+      inPosition = false;
     }
 
     const finalValue = equityCurve[equityCurve.length - 1].value;

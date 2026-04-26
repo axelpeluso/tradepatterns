@@ -68,6 +68,7 @@ OpenAPI/Swagger docs are auto-generated at `/docs`.
 |---------|------------------------------------------------------------|--------------------|
 | v1.0    | Baseline Random Forest, 5 patterns, FastAPI + Plotly UI    | 93%                |
 | v1.1    | 19 patterns, HGB model, MA features                        | 78% acc, 0.65 F1   |
+| v2.0    | Indicator context layer (stoch / ADX / volume / squeeze); model unchanged | 78% acc, 0.65 F1 |
 
 ## Tech Stack
 

@@ -17,6 +17,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+import pandas_ta as ta
 import yfinance as yf
 
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
@@ -120,6 +121,65 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def compute_indicators(df: pd.DataFrame) -> dict:
+    """
+    v2.0 inference-layer context. Computes momentum + volume indicators
+    on the engineered DataFrame and returns the most recent values plus
+    human-readable signal labels. These are NOT classifier inputs — adding
+    them to the model regressed metrics in the v2.0 experiment, so they
+    live here as supporting context only.
+    """
+    result = {}
+
+    # Stochastics %K / %D
+    stoch = ta.stoch(df["High"], df["Low"], df["Close"])
+    k = float(stoch.iloc[-1, 0])
+    d = float(stoch.iloc[-1, 1])
+    result["stoch_k"] = round(k, 2)
+    result["stoch_d"] = round(d, 2)
+    result["stoch_signal"] = (
+        "Oversold"   if k < 20 else
+        "Overbought" if k > 80 else
+        "Neutral"
+    )
+
+    # ADX (trend strength, direction-agnostic)
+    adx = ta.adx(df["High"], df["Low"], df["Close"])
+    a = float(adx.iloc[-1, 0])
+    result["adx"] = round(a, 2)
+    result["adx_signal"] = "Strong trend" if a > 25 else "Weak trend"
+
+    # Volume vs 20-day average
+    vol_ratio = float(df["Volume"].iloc[-1] /
+                      df["Volume"].rolling(20).mean().iloc[-1])
+    result["volume_ratio"] = round(vol_ratio, 2)
+    result["volume_signal"] = (
+        "High volume"   if vol_ratio > 1.5 else
+        "Low volume"    if vol_ratio < 0.7 else
+        "Normal volume"
+    )
+
+    # Squeeze momentum — pandas-ta returns SQZ_ON / SQZ_OFF / SQZ_NO booleans
+    # plus the momentum value column SQZ_20_2.0_20_1.5. Look up SQZ_ON
+    # explicitly because the column-name filter in the original spec would
+    # match the momentum value, not the on/off flag.
+    try:
+        sq = ta.squeeze(df["High"], df["Low"], df["Close"])
+        if sq is None or "SQZ_ON" not in sq.columns:
+            raise ValueError("squeeze unavailable")
+        result["squeeze_active"] = bool(int(sq["SQZ_ON"].iloc[-1]) == 1)
+        result["squeeze_signal"] = (
+            "Squeeze ON — breakout imminent"
+            if result["squeeze_active"]
+            else "No squeeze"
+        )
+    except Exception:
+        result["squeeze_active"] = False
+        result["squeeze_signal"] = "N/A"
+
+    return result
+
+
 def detect_patterns(ticker: str, start: str, end: str) -> dict:
     raw   = fetch_data(ticker, start, end)
     feats = engineer_features(raw)
@@ -167,6 +227,13 @@ def detect_patterns(ticker: str, start: str, end: str) -> dict:
     for p in patterns:
         summary[p["pattern_name"]] = summary.get(p["pattern_name"], 0) + 1
 
+    # v2.0: indicator context — computed on the full warmed-up `feats` so
+    # rolling windows are valid even when the user requests a narrow range.
+    try:
+        indicators = compute_indicators(feats)
+    except Exception as exc:
+        indicators = {"error": f"indicator computation failed: {exc}"}
+
     return {
         "ticker":         ticker.upper(),
         "start":          start,
@@ -174,6 +241,7 @@ def detect_patterns(ticker: str, start: str, end: str) -> dict:
         "candles":        candles,
         "patterns":       patterns,
         "summary":        summary,
+        "indicators":     indicators,
         "total_candles":  len(candles),
         "total_patterns": len(patterns),
         "model_version":  model_meta.get("version", "unknown"),
